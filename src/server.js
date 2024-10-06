@@ -10,6 +10,8 @@ const pool = new Pool({
   database: "man_of_the_match", // Name of database
   password: "your_db_password", // Database password
   port: 5432, // Default PostgreSQL port
+  connectionString: process.env.DATABASE_URL, // use Heroku's DATABASE_URL
+  ssl: { rejectUnauthorized: false }, // Heroku Postgres often requires SSL in production
 });
 
 app.use(cors()); // Enable CORS for all routes
@@ -21,7 +23,7 @@ app.get("/players", async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM players"); // Query to fetch all players
     res.json(result.rows); // Send the players as JSON response
-  } catch {
+  } catch (err) {
     res.status(500).send(err.message); // Send an error response if something goes wrong
   }
 });
@@ -35,7 +37,7 @@ app.post("/vote", async (req, res) => {
       [playerId]
     );
     res.send("Vote recorded"); // Send a success message
-  } catch {
+  } catch (err) {
     res.status(500).send(err.message); // Send an error response if something goes wrong
   }
 });
@@ -48,11 +50,11 @@ app.get("/results", async (req, res) => {
       "SELECT players.name, votes.vote_count FROM votes JOIN players ON votes.player_id = players.id"
     );
     res.json(result.rows); // Send the results as JSON response
-  } catch {
+  } catch (err) {
     res.status(500).send(err.message); // Send an error response if something goes wrong
   }
 });
 
 // SET THE PORT FOR THE SERVER TO LISTEN ON
-const port = process.env.PORT || 5001; // Use the port from the environment variable or default to 5000
+const port = process.env.PORT; // Use the port from the environment variable
 app.listen(port, () => console.log(`Server running on port ${port}`)); // Start the server and log the port
