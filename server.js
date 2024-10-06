@@ -10,8 +10,8 @@ const pool = new Pool({
   database: "man_of_the_match", // Name of database
   password: "your_db_password", // Database password
   port: 5432, // Default PostgreSQL port
-  connectionString: process.env.DATABASE_URL, // use Heroku's DATABASE_URL
-  ssl: { rejectUnauthorized: false }, // Heroku Postgres often requires SSL in production
+  connectionString: process.env.DATABASE_URL, // Use Heroku's DATABASE_URL if available
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false, // Only use SSL in production
 });
 
 app.use(cors()); // Enable CORS for all routes
@@ -45,16 +45,16 @@ app.post("/vote", async (req, res) => {
 // ROUTE TO GET VOTE RESULTS
 app.get("/results", async (req, res) => {
   try {
-    // Query to fetch player names and their vote counts
     const result = await pool.query(
       "SELECT players.name, votes.vote_count FROM votes JOIN players ON votes.player_id = players.id"
     );
     res.json(result.rows); // Send the results as JSON response
   } catch (err) {
-    res.status(500).send(err.message); // Send an error response if something goes wrong
+    console.error("Error fetching results:", err); // Log the error for debugging
+    res.status(500).send("Error fetching results"); // Send a generic error response
   }
 });
 
 // SET THE PORT FOR THE SERVER TO LISTEN ON
-const port = process.env.PORT; // Use the port from the environment variable
+const port = process.env.PORT || 3000; // Use the port from the environment variable
 app.listen(port, () => console.log(`Server running on port ${port}`)); // Start the server and log the port
